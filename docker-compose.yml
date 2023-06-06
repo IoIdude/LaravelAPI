@@ -1,0 +1,48 @@
+version: "3.9"
+services:
+    php:
+        container_name: php-fpm
+        build:
+            context: ./php
+        ports:
+            - 9000:9000
+        depends_on:
+            - db
+        volumes:
+            - ./app:/var/www/
+            - ./php/php.ini:/usr/local/etc/php/php.ini
+    nginx:
+        container_name: nginx
+        build:
+            context: ./nginx
+        ports:
+            - 8888:80
+        volumes:
+            - ./app:/var/www/
+            - ./app/storage/app/public:/var/www/public/storage
+            - ./nginx/logs:/var/log/nginx
+        depends_on:
+            - php
+            - db
+    adminer:
+        container_name: adminer
+        image: adminer
+        restart: always
+        ports:
+            - 8088:8088
+        depends_on:
+            - db
+    db:
+        image: postgres:latest
+        environment:
+            POSTGRES_DB: ${DB_DATABASE}
+            POSTGRES_USER: ${DB_USERNAME}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+            SERVICE_TAGS: dev
+            SERVICE_NAME: pgsql
+        ports:
+            - 5432:5432
+        volumes:
+            - ./docker-compose/postgres:/docker-entrypoint-initdb.d
+        container_name: filesystem_db
+        restart: always
